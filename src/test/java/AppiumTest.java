@@ -2,14 +2,11 @@ import io.appium.java_client.android.AndroidDriver;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebElement;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.net.URL;
-import java.time.Duration;
 
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -18,10 +15,10 @@ public class AppiumTest {
 
     private static final String PACKAGE_NAME = "ru.netology.testing.uiautomator";
     private static final long TIMEOUT = 10000;
-
     private static final String TEXT_TO_SET = "Netology";
 
     private AndroidDriver driver;
+    private MobileObjects mobileObjects;
 
     @BeforeEach
     public void setUp() throws Exception {
@@ -37,51 +34,37 @@ public class AppiumTest {
         desiredCapabilities.setCapability("appium:connectHardwareKeyboard", true);
 
         driver = new AndroidDriver(new URL("http://127.0.0.1:4723"), desiredCapabilities);
+        mobileObjects = new MobileObjects(driver);
 
     }
 
     @Test
     public void testEmptyInput() {
-        WebElement textElement = driver.findElement(By.id("ru.netology.testing.uiautomator:id/textToBeChanged"));
-        String initialText = textElement.getText();
+        String initialText = mobileObjects.textToBeChanged.getText();
 
         testInput("", initialText);
-
         testInput("   ", initialText);
     }
 
     private void testInput(String inputText, String expectedText) {
-        WebElement inputField = driver.findElement(By
-                .id("ru.netology.testing.uiautomator:id/userInput"));
-        inputField.isDisplayed();
-        inputField.sendKeys("");
+        mobileObjects.userInput.clear();
+        mobileObjects.userInput.sendKeys(inputText);
+        mobileObjects.buttonChange.click();
 
-        WebElement changeButton = driver.findElement(By
-                .id("ru.netology.testing.uiautomator:id/buttonChange"));
-        changeButton.isDisplayed();
-        changeButton.click();
-
-        String result = driver.findElement(By.id("ru.netology.testing.uiautomator:id/textToBeChanged"))
-                .getText();
+        String result = mobileObjects.textToBeChanged.getText();
         assertEquals(expectedText, result);
     }
 
     @Test
     public void testOpenTextInNewActivity() {
-        WebElement inputField = driver.findElement(By.id("ru.netology.testing.uiautomator:id/userInput"));
-        inputField.isDisplayed();
-        inputField.sendKeys(TEXT_TO_SET);
+        mobileObjects.userInput.clear();
+        mobileObjects.userInput.sendKeys(TEXT_TO_SET);
+        mobileObjects.buttonActivity.click();
 
-        WebElement openActivityButton = driver.findElement(By
-                .id("ru.netology.testing.uiautomator:id/buttonActivity"));
-        openActivityButton.isDisplayed();
-        openActivityButton.click();
+        new WebDriverWait(driver, TIMEOUT)
+                .until(ExpectedConditions.visibilityOf(mobileObjects.textInNewActivity));
 
-        WebElement resultText = new WebDriverWait(driver, TIMEOUT)
-                .until(ExpectedConditions.visibilityOfElementLocated(
-                        By.id("ru.netology.testing.uiautomator:id/text")));
-
-        assertEquals(TEXT_TO_SET, resultText.getText());
+        assertEquals(TEXT_TO_SET, mobileObjects.textInNewActivity.getText());
     }
 
     @AfterEach
